@@ -2,11 +2,22 @@
 
 Hard budget caps and a kill switch for AI coding agents. A runaway Claude Code session can no longer spend until the invoice arrives: you set a dollar or token cap, get a warning at 50% and 80%, and the next tool call is refused when the cap is hit. A manual kill switch stops a run even when it is under budget.
 
-Claude Code is enforced. Codex CLI and Cursor can be wired to the same decision, with the limits below. OpenClaw ships as a sample, not an installed enforcer.
+Dollar figures are estimates at first-party API list prices. The Claude rate card is dated 2026-11-09. The number is the API-equivalent cost of the tokens the session used. It is not what a Claude Pro or Max subscription, a Cursor plan, or any other hosted product actually bills.
 
-Dollars are first-party Claude API list price (the rate card dated 2026-11-09). Claude Pro and Max subscriptions are not invoiced from this table. The figure is the API-equivalent cost of the tokens the session used.
+Claude Code is enforced. Codex CLI and Cursor can be wired to the same decision. OpenClaw ships as a sample, not an installed enforcer. The matrix below is the short version of what each host actually stops.
+
+## Support
+
+| Host | Dollar cap | Kill switch | Hooks |
+| --- | --- | --- | --- |
+| Claude Code | Enforced from the session JSONL transcript | Yes | `spendguard init` writes `~/.claude/settings.json`. A cloud VM does not read that file. `spendguard init --project` writes `./.claude/settings.json`, which it can see. |
+| Codex CLI | When `PostModelRequest.token_usage` uses recognized field names. Unrecognized usage stays unknown and does not trip a dollar cap. | Yes. `Stop` ends the turn with `continue: false` only. | `spendguard init --adapter codex` writes `~/.codex/hooks.json`. New hooks do nothing until you trust them with `/hooks`. |
+| Cursor | Hook payloads have no token counts. A dollar cap applies only when `transcript_path` is Claude-style JSONL that contains `usage`. Otherwise spend shows as **unknown**, not $0. `spendguard budget set --strict` blocks those unmetered actions. | Yes. The next shell command, tool call, file read, prompt, or subagent is denied. | User-level hooks (`~/.cursor/hooks.json`) do not run on Cursor cloud agents. Project hooks do. `spendguard init --project --adapter cursor` writes `.cursor/hooks.json`. |
+| OpenClaw | Not metered. `model_call_ended` does not include token counts. | Sample only. Nothing is installed. | Read `adapters/openclaw/`. Confirm `before_tool_call` against current docs before using it. |
 
 ## Install
+
+Install from this checkout. The npm package `@levelupprintsolutions/spendguard` is not published yet.
 
 Node 20 or newer.
 
@@ -15,7 +26,7 @@ npm install
 npx spendguard demo
 ```
 
-`npm install` compiles the CLI. `npx spendguard` runs it from this checkout. The command name stays `spendguard`. To put it on your PATH:
+`npm install` compiles the CLI. `npx spendguard` runs it from this checkout. The command name stays `spendguard`. There is no registry package to install. To put this checkout on your PATH:
 
 ```bash
 npm install -g .
@@ -188,15 +199,23 @@ Hooks enforce the cap whether or not the model calls the tool. The skill is a hi
 
 Codex `PreToolUse` rejects `continue: false` and then lets the tool run, so that adapter sends `permissionDecision: "deny"` only. The shared decision engine is the same; the renderer is not.
 
-## Limitations
+## Known limits / safety
 
-- The transcript is written asynchronously. A hook can be one model call behind, and that call is already billed. `--block-at 0.95` leaves headroom if you want it. The default is the full cap.
-- Tool calls already in flight when the cap trips still finish. The next `PreToolUse` is the gate.
-- A kill switch stops the run at the next hook. It does not send a signal to the agent process mid-token.
+Enforcement can lag by one model call. The transcript is written asynchronously, so the call that crosses the cap is already billed. `--block-at 0.95` leaves headroom. The default is the full cap. Tool calls already in flight when the cap trips still finish. The next `PreToolUse` is the gate.
+
+Hooks that gate tool calls fail closed. If the hook crashes, the price table cannot be read, or the process cannot start, the host blocks the action instead of letting it through. A broken install keeps blocking tool calls until you remove the hooks:
+
+```bash
+npx spendguard uninstall
+```
+
+Pass the same flags you used at install. A project install is `npx spendguard uninstall --project`. Cursor or Codex is `npx spendguard uninstall --adapter cursor` or `--adapter codex`.
+
+A kill switch stops the run at the next hook. It does not send a signal to the agent process mid-token.
+
 - Subagent caps follow `agent_id` on the hook and `agent_transcript_path`. Rows that appear only as sidechain entries inside the parent transcript count toward the session total.
 - `status` scans `~/.claude/projects` for transcripts touched in the last 7 days (`--all` widens that). Sessions that never ran a hook and have no transcript show nothing.
-- Fail-closed hooks mean a broken install blocks tool calls. `spendguard uninstall` removes them.
-- The price table is list price. It is not your contract, your subscription, or a cloud-provider invoice.
+- Dollar figures are list-price estimates. They are not your contract, your subscription, or a cloud-provider invoice. See the note at the top.
 
 ## Tests
 
@@ -222,6 +241,7 @@ On the open-source side, the useful follow-ups are narrower:
 3. Turn the OpenClaw sample into a real plugin once `usageState` is a stable field, and confirm the `before_tool_call` return value.
 4. Tail large transcripts instead of rereading them. The current cache keys off size and mtime, which is enough for a session that appends.
 5. Optional OpenTelemetry export. Claude can emit usage on OTEL, but that stream cannot refuse a tool call. Hooks stay the enforcement point.
+6. Hosted-assistant platforms with scheduled routines (for example Grok Bot-style bots) are not metered. A per-run and daily cap, and a kill switch that stops the loop, is a requested future target.
 
 ## npm
 
