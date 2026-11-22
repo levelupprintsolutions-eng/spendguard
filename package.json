@@ -1,0 +1,33 @@
+{
+  "name": "spendguard",
+  "version": "0.1.0",
+  "description": "Hard budget caps and a kill switch for AI coding agents, starting with Claude Code.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "spendguard": "bin/spendguard.js"
+  },
+  "files": [
+    "bin",
+    "dist/src",
+    "prices",
+    "skill",
+    "adapters",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "test": "tsc && node --test dist/test/*.test.js",
+    "demo": "node dist/src/cli.js demo",
+    "start": "node dist/src/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.3"
+  }
+}
