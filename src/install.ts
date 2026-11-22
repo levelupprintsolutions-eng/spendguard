@@ -30,6 +30,11 @@ export function defaultSettingsPath(adapter: AdapterId, scope: "user" | "project
   if (adapter === "openclaw") {
     throw new Error("OpenClaw has no shell-hook settings file. See adapters/openclaw/handler.mjs.");
   }
+  if (adapter === "gemini-cli") {
+    return scope === "project"
+      ? path.join(cwd, ".gemini", "settings.json")
+      : path.join(os.homedir(), ".gemini", "settings.json");
+  }
   if (adapter === "claude-code") {
     return scope === "project"
       ? path.join(cwd, ".claude", "settings.json")
@@ -120,6 +125,14 @@ function mergeNested(existing: Record<string, unknown>, adapter: AdapterId, invo
 }
 
 function nestedHook(adapter: AdapterId, spec: HookSpec, invoke: Invocation): Record<string, unknown> {
+  if (adapter === "gemini-cli") {
+    return {
+      type: "command",
+      name: "spendguard",
+      command: invoke.shell,
+      timeout: spec.timeout,
+    };
+  }
   if (adapter === "claude-code") {
     const hook: Record<string, unknown> = {
       type: "command",

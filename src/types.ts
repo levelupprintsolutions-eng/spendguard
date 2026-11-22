@@ -1,5 +1,5 @@
 /** Hosts the governor knows how to talk to. */
-export type AdapterId = "claude-code" | "codex" | "cursor" | "openclaw";
+export type AdapterId = "claude-code" | "codex" | "cursor" | "openclaw" | "gemini-cli" | "proxy";
 
 export type Enforcement = "enforced" | "partial" | "sample";
 

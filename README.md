@@ -44,6 +44,21 @@ You should see, in order:
 
 The last line is `Demo passed.`
 
+## Any agent
+
+`spendguard proxy` is a localhost reverse proxy for the Anthropic, OpenAI, Gemini, and xAI APIs. Point the agent's base URL at it. The request that crosses the cap is already billed. The next request is HTTP 402 and is not forwarded. `spendguard kill` stops the next request even when the run is under the cap.
+
+```bash
+npx spendguard budget set --usd 5
+npx spendguard proxy --provider openai
+```
+
+```bash
+export OPENAI_BASE_URL=http://127.0.0.1:8791/v1
+```
+
+The same pattern covers the OpenAI Agents SDK, LangChain, LangGraph, and CrewAI, because they already take a base URL. Gemini CLI can also refuse the next model call from its own hooks (`spendguard init --adapter gemini`); the token split it reports is thinner than the proxy's. [docs/agents.md](docs/agents.md) says, for each host, what is actually stopped and what is only visible after the fact.
+
 ## Use it with Claude Code
 
 ```bash
@@ -184,6 +199,8 @@ Hooks enforce the cap whether or not the model calls the tool. The skill is a hi
 | Claude Code | Enforced | Transcript pricing, threshold warnings, hard stop, kill switch, subagent caps |
 | Codex CLI | Partial | `spendguard init --adapter codex` writes `~/.codex/hooks.json`. `PreToolUse` can deny. `Stop` can end the turn with `continue: false`. Spend comes from `PostModelRequest.token_usage` when the field names are recognized (`input_tokens`, `prompt_tokens`, and the usual cache fields). Codex says its transcript format is not stable, so rollout files are not priced. Unrecognized usage stays unknown and does not trip a dollar cap. New hooks do nothing until you trust them with `/hooks`. |
 | Cursor | Partial | `spendguard init --adapter cursor` writes `~/.cursor/hooks.json` with `failClosed: true`. The kill switch denies the next shell command, tool call, file read, prompt, or subagent. Hook payloads do not include token counts. A dollar cap applies only when `transcript_path` is Claude-style JSONL with `usage`. Otherwise spend is unknown, not $0. `spendguard budget set --strict` blocks unmetered actions too. User-level hooks do not run on cloud agents; project hooks do. |
+| Gemini CLI | Partial | `spendguard init --adapter gemini` writes `~/.gemini/settings.json`. `BeforeModel` and `BeforeTool` refuse the next call when recorded spend is over the cap. `AfterModel` prices `usageMetadata`. A total with no split is priced as output tokens. The proxy is the accurate bill. |
+| Provider proxy | Enforced | `spendguard proxy` meters Anthropic, OpenAI, Gemini, and xAI (and any OpenAI-compatible `--upstream`) and refuses the next request. |
 | OpenClaw | Sample | `adapters/openclaw/` is a hook you can read. It is not installed. Official `model_call_ended` events do not include token counts. `before_agent_run` can return `{ outcome: "block" }`. Confirm `before_tool_call` against the current docs before enabling the sample. |
 
 Codex `PreToolUse` rejects `continue: false` and then lets the tool run, so that adapter sends `permissionDecision: "deny"` only. The shared decision engine is the same; the renderer is not.

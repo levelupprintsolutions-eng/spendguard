@@ -26,6 +26,9 @@ const FAIL_CLOSED = new Set([
   "beforeReadFile",
   "beforeSubmitPrompt",
   "subagentStart",
+  "BeforeModel",
+  "BeforeTool",
+  "BeforeAgent",
 ]);
 
 export function handleHook(raw: string, options: HookOptions = {}): HookOutput {
@@ -151,8 +154,11 @@ function ingest(session: SessionRecord, event: NormalizedEvent, now: Date): void
   // SubagentStart runs in the parent, so its transcript_path is the parent
   // conversation. Tagging that file would bill the parent against the subagent.
   const transcriptAgent = event.kind === "subagent_start" || event.kind === "session_start" ? null : (event.agentId ?? null);
-  if (event.transcriptPath) readTranscript(session, event.transcriptPath, transcriptAgent, now);
-  if (event.extraTranscriptPath) readTranscript(session, event.extraTranscriptPath, event.agentId ?? null, now);
+  // Gemini CLI dollars come from AfterModel usageMetadata. Its transcript is not a stable bill.
+  if (event.adapter !== "gemini-cli") {
+    if (event.transcriptPath) readTranscript(session, event.transcriptPath, transcriptAgent, now);
+    if (event.extraTranscriptPath) readTranscript(session, event.extraTranscriptPath, event.agentId ?? null, now);
+  }
   if (event.usage && event.usageKey) {
     session.usageEvents[event.usageKey] = {
       agentId: event.agentId ?? null,
@@ -167,7 +173,10 @@ function ingest(session: SessionRecord, event: NormalizedEvent, now: Date): void
   if (event.adapter === "cursor" && Object.values(session.transcripts).some((transcript) => transcript.usageFound)) {
     session.usageKnown = true;
   }
-  if ((event.adapter === "codex" || event.adapter === "openclaw") && Object.keys(session.usageEvents).length > 0) {
+  if (
+    (event.adapter === "codex" || event.adapter === "openclaw" || event.adapter === "gemini-cli") &&
+    Object.keys(session.usageEvents).length > 0
+  ) {
     session.usageKnown = true;
   }
 }
