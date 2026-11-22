@@ -29,7 +29,7 @@ export interface SpendPicture {
 
 export function sessionMessages(session: SessionRecord, table: PriceTable): Map<string, PricedMessage> {
   const map = new Map<string, PricedMessage>();
-  const countTranscripts = session.adapter !== "codex";
+  const countTranscripts = session.adapter === "claude-code" || session.adapter === "cursor";
   if (countTranscripts) {
     for (const transcript of Object.values(session.transcripts)) {
       if (session.adapter === "cursor" && !transcript.usageFound) continue;

@@ -1,0 +1,81 @@
+{
+  "updated": "2026-11-22",
+  "source": "https://ai.google.dev/gemini-api/docs/pricing",
+  "notes": [
+    "USD per 1,000,000 tokens, paid standard tier, text. Checked 2026-11-22, before the January 1, 2027 Flash increase and the December 1, 2026 Gemini 2.5 retirement.",
+    "Context-cache storage (USD per million tokens per hour) is not in the response usage object and is not billed here.",
+    "Output rates include thinking tokens. Cached content is priced at the context-caching token rate and is not also billed as fresh input."
+  ],
+  "models": [
+    {
+      "id": "gemini-3.8-flash",
+      "match": ["gemini-3.8-flash"],
+      "input": 0.75,
+      "output": 3.75,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.075
+    },
+    {
+      "id": "gemini-3.6-flash",
+      "match": ["gemini-3.6-flash"],
+      "input": 0.75,
+      "output": 3.75,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.075
+    },
+    {
+      "id": "gemini-3.5-flash-lite",
+      "match": ["gemini-3.5-flash-lite"],
+      "input": 0.3,
+      "output": 2.5,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.03
+    },
+    {
+      "id": "gemini-3.1-pro-preview",
+      "match": ["gemini-3.1-pro-preview", "gemini-3.1-pro"],
+      "input": 2,
+      "output": 12,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.2,
+      "longContext": {
+        "aboveTokens": 200000,
+        "input": 4,
+        "output": 18,
+        "cacheWrite5m": 0,
+        "cacheWrite1h": 0,
+        "cacheRead": 0.4
+      }
+    },
+    {
+      "id": "gemini-2.5-pro",
+      "match": ["gemini-2.5-pro"],
+      "input": 1.25,
+      "output": 10,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.125,
+      "longContext": {
+        "aboveTokens": 200000,
+        "input": 2.5,
+        "output": 15,
+        "cacheWrite5m": 0,
+        "cacheWrite1h": 0,
+        "cacheRead": 0.25
+      }
+    },
+    {
+      "id": "gemini-2.5-flash",
+      "match": ["gemini-2.5-flash"],
+      "input": 0.3,
+      "output": 2.5,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.03
+    }
+  ]
+}

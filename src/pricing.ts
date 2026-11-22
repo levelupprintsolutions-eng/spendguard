@@ -60,6 +60,13 @@ export function loadPriceTable(options?: { home?: string; pricesPath?: string })
   const override = options?.pricesPath ?? process.env.SPENDGUARD_PRICES;
   const basePath = override ? path.resolve(override) : builtinPricePath();
   const table = parsePriceTable(readJson(basePath), basePath);
+  if (!override) {
+    const dir = path.dirname(basePath);
+    for (const name of ["openai.json", "google.json", "xai.json"]) {
+      const companion = path.join(dir, name);
+      if (fs.existsSync(companion)) mergeOverlay(table, readJson(companion), companion);
+    }
+  }
   const overlay =
     options?.home && !override ? path.join(options.home, "prices.json") : undefined;
   if (overlay && fs.existsSync(overlay)) {

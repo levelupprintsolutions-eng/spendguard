@@ -1,0 +1,80 @@
+{
+  "updated": "2026-10-10",
+  "source": "https://docs.x.ai/developers/pricing",
+  "notes": [
+    "USD per 1,000,000 tokens from the xAI pricing page, last updated October 10, 2026.",
+    "Long-context rates apply to the whole request once the prompt is over the threshold. The page says at or above 200,000; this table switches above 200,000.",
+    "US regional endpoints are 1.1x. Set usGeoMultiplier on a row if you pin that endpoint.",
+    "xAI speaks the OpenAI chat-completions shape, so the openai provider parser is used when --provider xai."
+  ],
+  "models": [
+    {
+      "id": "grok-4.7",
+      "match": ["grok-4.7"],
+      "input": 2,
+      "output": 6,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.5,
+      "longContext": {
+        "aboveTokens": 200000,
+        "input": 4,
+        "output": 12,
+        "cacheWrite5m": 0,
+        "cacheWrite1h": 0,
+        "cacheRead": 1
+      }
+    },
+    {
+      "id": "grok-4.6",
+      "match": ["grok-4.6"],
+      "input": 2,
+      "output": 6,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.5,
+      "longContext": {
+        "aboveTokens": 200000,
+        "input": 4,
+        "output": 12,
+        "cacheWrite5m": 0,
+        "cacheWrite1h": 0,
+        "cacheRead": 1
+      }
+    },
+    {
+      "id": "grok-4.5",
+      "match": ["grok-4.5"],
+      "input": 2,
+      "output": 6,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.3,
+      "longContext": {
+        "aboveTokens": 200000,
+        "input": 4,
+        "output": 12,
+        "cacheWrite5m": 0,
+        "cacheWrite1h": 0,
+        "cacheRead": 0.6
+      }
+    },
+    {
+      "id": "grok-4.3",
+      "match": ["grok-4.3", "grok-4.20"],
+      "input": 1.25,
+      "output": 2.5,
+      "cacheWrite5m": 0,
+      "cacheWrite1h": 0,
+      "cacheRead": 0.2,
+      "longContext": {
+        "aboveTokens": 200000,
+        "input": 2.5,
+        "output": 5,
+        "cacheWrite5m": 0,
+        "cacheWrite1h": 0,
+        "cacheRead": 0.4
+      }
+    }
+  ]
+}

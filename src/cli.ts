@@ -27,6 +27,8 @@ import {
 } from "./install.js";
 import { clearKill, engageKill, type KillScope } from "./kills.js";
 import { serveMcp } from "./mcp.js";
+import { startProxy } from "./proxy/server.js";
+import { defaultUpstream, parseProxyProvider } from "./proxy/parse.js";
 import { resolveHome } from "./paths.js";
 import { loadPriceTable, type ModelPrice } from "./pricing.js";
 import { loadLedger } from "./store.js";
@@ -126,6 +128,11 @@ Usage
   spendguard adapters [--json]
   spendguard hook                 read a host hook payload on stdin
   spendguard mcp                  stdio MCP server (status only)
+  spendguard proxy --provider anthropic|openai|gemini|xai [--port 8791] [--upstream URL]
+
+The proxy listens on 127.0.0.1. Point an agent's API base URL at it and the
+same caps and kill switch apply to the next provider request. Gemini CLI
+hooks install with --adapter gemini. See docs/agents.md for what each host enforces.
 
 State lives in ~/.spendguard (override with SPENDGUARD_HOME or --home).
 A session cap replaces the project default, which replaces the global default.
@@ -160,6 +167,7 @@ async function main(): Promise<number> {
     if (command === "prices") return commandPrices(args);
     if (command === "adapters") return commandAdapters(args);
     if (command === "hook") return commandHook(args);
+    if (command === "proxy") return commandProxy(args);
     if (command === "mcp") {
       await serveMcp(homeOf(args));
       return 0;
@@ -349,6 +357,26 @@ function commandAdapters(args: Parsed): number {
     for (const limitation of row.limitations) console.log(`  - ${limitation}`);
     console.log("");
   }
+  return 0;
+}
+
+async function commandProxy(args: Parsed): Promise<number> {
+  const provider = parseProxyProvider(flag(args, "provider"));
+  if (!provider) throw new Error("--provider must be anthropic, openai, gemini, or xai.");
+  const upstream = flag(args, "upstream") ?? defaultUpstream(provider);
+  const port = flag(args, "port");
+  const host = flag(args, "host") ?? "127.0.0.1";
+  const running = await startProxy({
+    provider,
+    upstream,
+    home: homeOf(args),
+    host,
+    ...(port ? { port: Number(port) } : { port: 8791 }),
+    cwd: flag(args, "cwd") ?? process.cwd(),
+  });
+  console.error(`spendguard proxy listening on ${running.url} -> ${upstream} (${provider})`);
+  console.error("Ctrl-C stops it. API keys are forwarded and are not stored.");
+  await new Promise(() => {});
   return 0;
 }
 

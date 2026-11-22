@@ -215,6 +215,15 @@ function normalizeLedger(raw: unknown): Ledger {
 }
 
 function asAdapter(value: unknown): AdapterId {
-  if (value === "codex" || value === "cursor" || value === "openclaw" || value === "claude-code") return value;
+  if (
+    value === "codex" ||
+    value === "cursor" ||
+    value === "openclaw" ||
+    value === "claude-code" ||
+    value === "gemini-cli" ||
+    value === "proxy"
+  ) {
+    return value;
+  }
   return "claude-code";
 }

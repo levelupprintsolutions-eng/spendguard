@@ -62,8 +62,8 @@ test("priority tier is noted and not given an invented multiplier", () => {
   assert.ok(cost.notes.some((note) => note.includes("priority")));
 });
 
-test("cache multipliers match the published table", () => {
-  for (const model of table.models) {
+test("Anthropic cache multipliers match the published table", () => {
+  for (const model of table.models.filter((item) => item.id.startsWith("claude-"))) {
     assert.ok(Math.abs(model.cacheWrite5m / model.input - 1.25) < 1e-9, model.id);
     assert.ok(Math.abs(model.cacheWrite1h / model.input - 2) < 1e-9, model.id);
     const read = model.cacheRead / model.input;
