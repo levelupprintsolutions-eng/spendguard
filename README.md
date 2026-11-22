@@ -15,7 +15,7 @@ npm install
 npx spendguard demo
 ```
 
-`npm install` compiles the CLI. `npx spendguard` runs it from this checkout. To put it on your PATH:
+`npm install` compiles the CLI. `npx spendguard` runs it from this checkout. The command name stays `spendguard`. To put it on your PATH:
 
 ```bash
 npm install -g .
@@ -222,6 +222,10 @@ On the open-source side, the useful follow-ups are narrower:
 3. Turn the OpenClaw sample into a real plugin once `usageState` is a stable field, and confirm the `before_tool_call` return value.
 4. Tail large transcripts instead of rereading them. The current cache keys off size and mtime, which is enough for a session that appends.
 5. Optional OpenTelemetry export. Claude can emit usage on OTEL, but that stream cannot refuse a tool call. Hooks stay the enforcement point.
+
+## npm
+
+The package is not published. The unscoped name `spendguard` is already registered on npm by a different project. This package is set up to publish as `@levelupprintsolutions/spendguard` with `"publishConfig": { "access": "public" }`. Publishing that scope requires an npm account that owns `@levelupprintsolutions`. Do not publish until that account exists.
 
 ## License
 

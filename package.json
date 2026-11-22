@@ -1,9 +1,20 @@
 {
-  "name": "spendguard",
+  "name": "@levelupprintsolutions/spendguard",
   "version": "0.1.0",
   "description": "Hard budget caps and a kill switch for AI coding agents, starting with Claude Code.",
   "type": "module",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/levelupprintsolutions-eng/spendguard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/levelupprintsolutions-eng/spendguard/issues"
+  },
+  "homepage": "https://github.com/levelupprintsolutions-eng/spendguard#readme",
   "engines": {
     "node": ">=20"
   },
