@@ -61,6 +61,18 @@ test("Claude PreToolUse denies and stops, and Stop does not ask the model to con
   assert.equal("decision" in stopBody, false);
 });
 
+test("Claude SubagentStop sends continue:false and never decision:block", () => {
+  const dir = home();
+  setBudget(dir, { kind: "global-session" }, { usd: 1 });
+  const file = transcript(dir, "s.jsonl", [assistant("m", 300_000)]);
+  const stopped = handleHook(claude("SubagentStop", "s", file, dir, { agent_id: "explore" }), { home: dir });
+  const stopBody = json(stopped.stdout);
+  assert.equal(stopped.exitCode, 0);
+  assert.equal(stopBody.continue, false);
+  assert.equal(stopBody.decision, undefined);
+  assert.equal("decision" in stopBody, false);
+});
+
 test("the same message id in two transcripts is billed once", () => {
   const dir = home();
   setBudget(dir, { kind: "global-session" }, { usd: 0.5 });
