@@ -66,6 +66,10 @@ function evaluatePayload(payload: Record<string, unknown>, options: HookOptions)
     const session = locateSession(ledger.sessions, event, now);
     ledger.sessions[session.id] = session;
     ingest(session, event, now);
+    // One transcript file is one bill. A subagent hook and the parent's
+    // subagentStop can both be handed that path; keep it on this session only.
+    releaseSharedTranscript(ledger.sessions, session.id, event.transcriptPath);
+    releaseSharedTranscript(ledger.sessions, session.id, event.extraTranscriptPath);
     const projectKey = session.projectKey || (event.cwd ? resolveExisting(event.cwd) : "");
     const matched = projectKey ? matchProject(config, projectKey) : null;
     const picture = pictureFor({
@@ -148,9 +152,16 @@ function locateSession(
 }
 
 function ingest(session: SessionRecord, event: NormalizedEvent, now: Date): void {
-  // SubagentStart runs in the parent, so its transcript_path is the parent
-  // conversation. Tagging that file would bill the parent against the subagent.
-  const transcriptAgent = event.kind === "subagent_start" || event.kind === "session_start" ? null : (event.agentId ?? null);
+  // subagentStart and subagentStop run in the parent, so transcript_path is
+  // the parent conversation and the subagent file arrives separately.
+  // Tagging the parent file would bill it against the subagent cap. A hook
+  // that runs inside the subagent passes that file as transcript_path and
+  // has no second path, so the subagent id stays on it.
+  const transcriptIsParent =
+    event.kind === "subagent_start" ||
+    event.kind === "session_start" ||
+    (event.kind === "subagent_stop" && event.extraTranscriptPath !== undefined);
+  const transcriptAgent = transcriptIsParent ? null : (event.agentId ?? null);
   if (event.transcriptPath) readTranscript(session, event.transcriptPath, transcriptAgent, now);
   if (event.extraTranscriptPath) readTranscript(session, event.extraTranscriptPath, event.agentId ?? null, now);
   if (event.usage && event.usageKey) {
@@ -169,6 +180,23 @@ function ingest(session: SessionRecord, event: NormalizedEvent, now: Date): void
   }
   if ((event.adapter === "codex" || event.adapter === "openclaw") && Object.keys(session.usageEvents).length > 0) {
     session.usageKnown = true;
+  }
+}
+
+function releaseSharedTranscript(
+  sessions: Record<string, SessionRecord>,
+  ownerId: string,
+  filePath: string | undefined,
+): void {
+  if (!filePath || !sessions[ownerId]?.transcripts[filePath]) return;
+  for (const [id, other] of Object.entries(sessions)) {
+    if (id === ownerId || !other.transcripts[filePath]) continue;
+    delete other.transcripts[filePath];
+    if (other.adapter !== "cursor") continue;
+    const usageLeft = Object.values(other.transcripts).some((transcript) => transcript.usageFound);
+    if (usageLeft || Object.keys(other.usageEvents).length > 0) continue;
+    if (Object.keys(other.transcripts).length === 0) delete sessions[id];
+    else other.usageKnown = false;
   }
 }
 
