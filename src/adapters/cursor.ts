@@ -55,9 +55,13 @@ export const cursorAdapter: AgentAdapter = {
     const parent = asString(payload.parent_conversation_id);
     const own = asString(payload.conversation_id) ?? asString(payload.session_id);
     const agentId = asString(payload.subagent_id) ?? asString(payload.agent_id);
-    const sessionId = parent ?? own ?? "unknown";
     const transcriptPath = asString(payload.transcript_path);
     const agentTranscript = asString(payload.agent_transcript_path);
+    // Hooks that run inside a subagent carry the child's conversation_id.
+    // The file still lives under the parent folder, and that spend belongs
+    // on the parent session. An explicit parent_conversation_id wins.
+    const nestedParent = parentSessionFromSubagentTranscript(transcriptPath) ?? parentSessionFromSubagentTranscript(agentTranscript);
+    const sessionId = parent ?? nestedParent ?? own ?? "unknown";
     const model = asString(payload.model_id) ?? asString(payload.model);
     const agentType = asString(payload.subagent_type);
     const cwd = asString(payload.cwd);
@@ -101,3 +105,10 @@ function renderCursor(event: NormalizedEvent, decision: Decision): HookOutput {
 }
 
 export const CURSOR_EVENTS = new Set(Object.keys(KINDS));
+
+/** `agent-transcripts/<parent>/subagents/<file>` belongs to `<parent>`. */
+function parentSessionFromSubagentTranscript(filePath: string | undefined): string | undefined {
+  if (!filePath) return undefined;
+  const match = /(?:^|\/)agent-transcripts\/([^/]+)\/subagents\/[^/]+$/.exec(filePath.replaceAll("\\", "/"));
+  return match?.[1] || undefined;
+}
